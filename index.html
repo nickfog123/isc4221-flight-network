@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore the 2014 U.S. domestic flight network: airports, hubs, nearby airports, and the connections between them.">
+  <meta name="theme-color" content="#122b40">
+  <title>Flight Network Explorer · Lab 07B</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script defer src="algorithms.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#airport-code">Skip to airport lookup</a>
+  <header class="masthead">
+    <div class="brand"><span class="brand-icon" aria-hidden="true">↗</span><span>FLIGHT<span class="brand-light"> / NETWORK</span></span></div>
+    <nav aria-label="Main navigation"><a href="#explore">Explore</a><a href="#summary-panel">The numbers</a><a href="#about-panel">About</a></nav>
+    <span class="lab-tag">ISC4221C · LAB 07B</span>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow">THE U.S. DOMESTIC AIR NETWORK</p><h1 id="page-title">A country of connections<span>.</span></h1><p class="intro-copy">Find the hubs. Explore the neighbors. See how far a few flights can take you.</p></div>
+      <div class="snapshot"><span class="status-dot" aria-hidden="true"></span>2014 ROUTE SNAPSHOT<span>OpenFlights data · Undirected network</span></div>
+    </section>
+
+    <div id="load-status" class="notice" role="status">Loading the flight network…</div>
+    <noscript><p class="notice error">Please enable JavaScript to explore the network.</p></noscript>
+
+    <div class="dashboard" id="explore">
+      <section class="panel map-panel" aria-labelledby="map-title">
+        <div class="panel-heading"><div><span class="panel-letter">A</span><h2 id="map-title">Network map</h2></div><span class="panel-kicker">EVERY ROUTE TELLS A STORY</span></div>
+        <div class="map-toolbar"><div class="region-buttons" role="group" aria-label="Map region"><button data-region="mainland" class="active" aria-pressed="true">Mainland</button><button data-region="alaska" aria-pressed="false">Alaska</button><button data-region="hawaii" aria-pressed="false">Hawaii</button><button data-region="all" aria-pressed="false">All airports</button></div><label class="route-toggle"><input id="show-routes" type="checkbox" checked> Show routes</label></div>
+        <div class="map-wrap"><div id="map" aria-label="Interactive airport map. Use airport lookup for keyboard selection."></div><div id="map-fallback" hidden><strong>The map library could not load.</strong><p>Check your internet connection and refresh. Airport lookup, charts, and the connection checker still work below.</p></div></div>
+        <div class="map-legend" aria-label="Map legend"><span><i class="legend-dot blue"></i>Airport · size = degree</span><span><i class="legend-line orange"></i>Selected routes / path</span><span><i class="legend-dot teal"></i>Reached / component</span></div>
+        <p id="map-caption" class="map-caption" aria-live="polite">Select an airport to explore its direct connections. Alaska and Hawaii are available above.</p>
+      </section>
+
+      <section class="panel lookup-panel" aria-labelledby="lookup-title">
+        <div class="panel-heading"><div><span class="panel-letter">B</span><h2 id="lookup-title">Airport lookup</h2></div><span class="panel-kicker">FIND YOUR STARTING POINT</span></div>
+        <form id="lookup-form" class="search-form"><label class="sr-only" for="airport-code">Three-letter airport code</label><input id="airport-code" name="airport" type="text" value="TLH" placeholder="e.g. TLH" maxlength="12" autocomplete="off" spellcheck="false" autocapitalize="characters" aria-describedby="lookup-hint"><button class="primary-button" type="submit" disabled>Search <span aria-hidden="true">↗</span></button></form>
+        <p id="lookup-hint" class="field-hint">Enter any three-letter airport code. Upper or lower case works.</p>
+        <div id="airport-result" aria-live="polite" aria-atomic="true"><p class="muted">Airport details will appear here.</p></div>
+      </section>
+
+      <section class="panel summary-panel" id="summary-panel" aria-labelledby="summary-title">
+        <div class="panel-heading"><div><span class="panel-letter">C</span><h2 id="summary-title">Network summary</h2></div><span class="panel-kicker">THE BIG PICTURE</span></div>
+        <div class="metrics"><div><strong id="stat-airports">—</strong><span>Airports with routes</span></div><div><strong id="stat-edges">—</strong><span>Unique routes</span></div><div><strong id="stat-components">—</strong><span>Connected components</span></div></div>
+        <p id="dataset-counts" class="summary-note"></p>
+        <div class="section-label"><h3>The 10 largest hubs</h3><span>DIRECT DESTINATIONS</span></div>
+        <div id="hub-chart" class="hub-chart" aria-label="Ten largest hubs by number of direct destinations"></div>
+        <h3 class="components-title">Connected components</h3><p class="field-hint">Select a component to highlight its airports on the map.</p><div id="components" class="component-list"></div>
+        <details class="more-details"><summary>Fewest flights from TLH</summary><div id="flight-chart"></div><p id="farthest-airports" class="summary-note"></p></details>
+        <details class="more-details"><summary>Search performance &amp; validation</summary><p id="search-theory" class="summary-note"></p><div class="table-scroll"><table><caption>Python benchmark · seed 56789 · 5,000 queries per row</caption><thead><tr><th>Method</th><th>Queries</th><th>Time (ms)</th><th>Avg. comparisons</th><th>Max.</th></tr></thead><tbody id="benchmark-rows"></tbody></table></div><p id="benchmark-note" class="summary-note"></p><p id="validation-note" class="summary-note"></p></details>
+      </section>
+
+      <section class="panel connection-panel" aria-labelledby="connection-title">
+        <div class="panel-heading"><div><span class="panel-letter">D</span><h2 id="connection-title">Connection checker</h2></div><span class="panel-kicker">CAN I GET THERE FROM HERE?</span></div>
+        <p class="panel-description">Choose two airports. Explore whether they connect, and how many flights it takes.</p>
+        <form id="connection-form"><div class="airport-selects"><div><label for="origin">FROM</label><select id="origin" name="origin" disabled><option>Loading airports…</option></select></div><span class="select-arrow" aria-hidden="true">→</span><div><label for="destination">TO</label><select id="destination" name="destination" disabled><option>Loading airports…</option></select></div></div><button type="submit" class="primary-button check-button" disabled>Check connection <span aria-hidden="true">↗</span></button></form>
+        <div class="quick-checks" role="group" aria-label="Example airport pairs"><span>Try a pair</span><button data-origin="TLH" data-destination="SEA">TLH → SEA</button><button data-origin="TLH" data-destination="AKB">TLH → AKB</button><button data-origin="DUT" data-destination="AKB">DUT → AKB</button><button data-origin="PSM" data-destination="SEA">PSM → SEA</button></div>
+        <div id="connection-result" aria-live="polite" aria-atomic="true"><div class="empty-connection"><span aria-hidden="true">↗</span><p>Every journey starts with a question.</p><p class="field-hint">Choose your airports and check a connection.</p></div></div>
+      </section>
+
+      <section class="panel about-panel" id="about-panel" aria-labelledby="about-title"><div class="panel-heading"><div><span class="panel-letter">E</span><h2 id="about-title">About the data</h2></div><span class="year-tag">2014</span></div><div class="about-grid"><p>This is a simple, undirected graph of U.S. domestic flights from <a href="https://openflights.org/data.php" target="_blank" rel="noopener">OpenFlights</a>. Airports whose country is “United States” and that have a valid IATA code are nodes; a route in either direction becomes one edge. Repeated airline routes and self-loops are removed. The explorer includes airports with at least one domestic route. The route snapshot dates to <strong>2014</strong>, so this is a study of network structure, not a current flight schedule.</p><div class="about-links"><a href="https://opendatacommons.org/licenses/odbl/1-0/" target="_blank" rel="noopener">Data license · ODbL 1.0 <span aria-hidden="true">↗</span></a><a id="repository-link" href="https://github.com/FSU-4221C/fsu-4221c-26-lab-7b-flight-network-nickfog123" target="_blank" rel="noopener">Course repository <span aria-hidden="true">↗</span></a><a id="report-link" href="https://github.com/FSU-4221C/fsu-4221c-26-lab-7b-flight-network-nickfog123/blob/main/report.md" target="_blank" rel="noopener">Read the lab report <span aria-hidden="true">↗</span></a><small>The course repository and report require course access.</small></div></div></section>
+    </div>
+  </main>
+  <footer><span>FLIGHT / NETWORK</span><span>Discrete algorithms. Real connections.</span><a href="#page-title">Back to top ↑</a></footer>
+</body>
+</html>
