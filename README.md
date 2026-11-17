@@ -43,3 +43,9 @@ unavailable today.
 
 This project explores network structure. It does not provide
 current schedules, fares, booking, or flight status.
+
+## My Contributions and AI Assistance
+
+I implemented the core Python analysis, including network construction, hub ranking, geographic distance calculations, sorting and search algorithms, search benchmarking, and graph traversal for connectivity and minimum flight counts.
+
+OpenAI Codex assisted with the map visualization, web interface, data exporter, and JavaScript implementations used in the live demo.
